@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - matplotlib=3.7.1
+  - scikit-learn=1.2.2
+  - tqdm=4.65.0

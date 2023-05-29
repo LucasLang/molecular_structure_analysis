@@ -1,0 +1,248 @@
+configfile: "../config/config.yaml"
+
+samplpath = f"../results/nsampling{config['nsampling']}"
+clustpath = f"../results/nsampling{config['nsampling']}/nclustering{config['nclustering']}"
+
+wfparams = ["../resources/parameters_D3+/coeffs",
+"../resources/parameters_D3+/gauss_param",
+"../resources/parameters_D3+/inout.txt"]
+
+rule all:
+    input:
+        f"{clustpath}/visualization/2D_KDE_nuclei_heatmap.png",
+        f"{samplpath}/plot_6samples/D3plus_randomsamples.png",
+        f"{clustpath}/visualization/KDEdensity.cube",
+        f"{samplpath}/expectvalues/table.tex",
+        f"{samplpath}/equilibration.png",
+        "../results/opt_jumpinglengths",
+        "../results/plot_startconfig_asymmetric/startconfig.png",
+        f"{clustpath}/visualization/samples_randomorientation.png"
+
+rule sampling_asymstart:
+    input:
+        wfparams
+    params:
+        nsampling=config["nsampling"],
+        samplpath=samplpath
+    output:
+        f"{samplpath}/sampling_asymmetricstart/sample",
+        f"{samplpath}/sampling_asymmetricstart/rho"
+    shell:
+        """
+        mkdir -p {params.samplpath}/sampling_asymmetricstart
+        julia scripts/sample.jl ../resources/parameters_D3+ {params.nsampling} {params.samplpath}/sampling_asymmetricstart
+        """
+
+rule distance_matrix:
+    input:
+        wfparams,
+        f"{samplpath}/sampling_asymmetricstart/sample"
+    params:
+        nclustering=config["nclustering"],
+        samplpath=samplpath
+    output:
+        f"{clustpath}/kmedoids/distance_matrix.npy"
+    shell:
+        "julia scripts/write_distancematrix.jl ../resources/parameters_D3+ {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {output}"
+
+rule kmedoids:
+    input:
+        f"{clustpath}/kmedoids/distance_matrix.npy"
+    params:
+        outfolder=f"{clustpath}/kmedoids"
+    output:
+        f"{clustpath}/kmedoids/nclusters1_medoid_indices.npy"
+    conda:
+        "envs/sklearnextra.yaml"
+    shell:
+        "python scripts/run_kmedoids.py {input} {params.outfolder}"
+
+rule align_samples_all:
+    input:
+        f"{samplpath}/sampling_asymmetricstart/sample",
+        f"{clustpath}/kmedoids/nclusters1_medoid_indices.npy"
+    output:
+        f"{clustpath}/visualization/samples_aligned_all.npy"
+    params:
+        nsampling=config["nsampling"],
+        nclustering=config["nclustering"],
+        clustpath=clustpath
+    shell:
+        """
+        mkdir -p {params.clustpath}/visualization
+        julia scripts/align_samples_D3plus.jl {input} {params.nsampling} {params.nclustering} {output}
+        """
+
+rule plot_alignedsamples_2DKDE:
+    input:
+        f"{clustpath}/visualization/samples_aligned_all.npy",
+        f"{clustpath}/kmedoids/nclusters1_medoid_indices.npy"
+    output:
+        f"{clustpath}/visualization/2D_KDE_nuclei_heatmap.png"
+    conda:
+        "envs/sklearn_mpl.yaml"
+    params:
+        nclustering=config["nclustering"]
+    shell:
+        "python scripts/kde_estimate_nuclei_heatmap.py {input} {params.nclustering} 6 {output}"
+
+rule samples_planebasis:
+    input:
+        wfparams, 
+        f"{samplpath}/sampling_asymmetricstart/sample",
+        f"{samplpath}/sampling_asymmetricstart/rho"
+    params:
+        outfolder=f"{samplpath}/plot_6samples",
+        samplpath=samplpath
+    output:
+        expand("{outfolder}/sample{i}_planebasis", i=range(1,7), outfolder=f"{samplpath}/plot_6samples"),
+        f"{samplpath}/plot_6samples/saved_rho_selected"
+    shell:
+        """
+        mkdir -p {params.outfolder}
+        julia scripts/write_samples_planebasis.jl ../resources/parameters_D3+ {params.samplpath}/sampling_asymmetricstart 6 {params.outfolder}
+        """
+
+rule plot_samples:
+    input:
+        expand("{outfolder}/sample{i}_planebasis", i=range(1,7), outfolder=f"{samplpath}/plot_6samples"),
+        f"{samplpath}/plot_6samples/saved_rho_selected"
+    params:
+        outfolder=f"{samplpath}/plot_6samples"
+    output:
+        f"{samplpath}/plot_6samples/D3plus_randomsamples.png"
+    conda:
+        "envs/sklearn_mpl.yaml"
+    shell:
+        "python scripts/plot_samples.py {params.outfolder}"
+
+rule eldens_sampling:
+    input:
+        f"{clustpath}/visualization/samples_aligned_all.npy",
+        f"{clustpath}/kmedoids/nclusters1_medoid_indices.npy"
+    output:
+        f"{clustpath}/visualization/KDEdensity.cube"
+    params:
+        clusterinterval = config["nsampling"]//config["nclustering"]
+    conda:
+        "envs/sklearn_mpl.yaml"
+    shell:
+        "python scripts/kde_estimate_electrons.py {input} {params.clusterinterval} {output}"
+
+rule Etot_sampling:
+    input:
+        wfparams=wfparams,
+        sample=f"{samplpath}/sampling_asymmetricstart/sample"
+    output:
+        f"{samplpath}/expectvalues/Etot_sampling"
+    params:
+        outfolder=f"{samplpath}/expectvalues"
+    shell:
+        """
+        mkdir -p {params.outfolder}
+        julia scripts/estimate_Etot.jl {input.sample} ../resources/parameters_D3+ {output}
+        """
+
+rule Etot_analytical:
+    input:
+        "../resources/parameters_D3+/inout.txt"
+    output:
+        f"{samplpath}/expectvalues/Etot_analytical"
+    params:
+        outfolder=f"{samplpath}/expectvalues"
+    shell:
+        """
+        mkdir -p {params.outfolder}
+        julia scripts/Etot_analytical.jl {input} {output}
+        """
+
+rule distances_sampling:
+    input:
+        f"{samplpath}/sampling_asymmetricstart/sample"
+    output:
+        f"{samplpath}/expectvalues/rDD_sampling",
+        f"{samplpath}/expectvalues/rDe_sampling",
+        f"{samplpath}/expectvalues/ree_sampling"
+    params:
+        outfolder=f"{samplpath}/expectvalues"
+    shell:
+        """
+        mkdir -p {params.outfolder}
+        julia scripts/estimate_distances_D3plus.jl {input} {params.outfolder}
+        """
+
+rule distances_analytical:
+    input:
+        "../resources/distances_analytical/expectvalues.out"
+    output:
+        f"{samplpath}/expectvalues/rDD_analytical",
+        f"{samplpath}/expectvalues/rDe_analytical",
+        f"{samplpath}/expectvalues/ree_analytical"
+    params:
+        outfolder=f"{samplpath}/expectvalues"
+    shell:
+        """
+        mkdir -p {params.outfolder}
+        julia scripts/distances_analytical.jl {input} {params.outfolder}
+        """
+
+rule write_table:
+    input:
+        f"{samplpath}/expectvalues/Etot_sampling",
+        f"{samplpath}/expectvalues/Etot_analytical",
+        f"{samplpath}/expectvalues/rDD_sampling",
+        f"{samplpath}/expectvalues/rDe_sampling",
+        f"{samplpath}/expectvalues/ree_sampling",
+        f"{samplpath}/expectvalues/rDD_analytical",
+        f"{samplpath}/expectvalues/rDe_analytical",
+        f"{samplpath}/expectvalues/ree_analytical"
+    output:
+        f"{samplpath}/expectvalues/table.tex"
+    params:
+        outfolder=f"{samplpath}/expectvalues"
+    shell:
+        """
+        python scripts/write_table.py {params.outfolder}
+        """
+
+rule plot_equilibration:
+    input:
+        f"{samplpath}/sampling_asymmetricstart/rho"
+    output:
+        f"{samplpath}/equilibration.png"
+    params:
+        nsteps=500
+    conda:
+        "envs/sklearn_mpl.yaml"
+    shell:
+        "python scripts/plot_equilibration.py {input} {params.nsteps} {output}"
+
+rule optimize_jumpinglengths:
+    input:
+        wfparams
+    output:
+        "../results/opt_jumpinglengths"
+    shell:
+        "julia scripts/optimize_jumpinglengths.jl ../resources/parameters_D3+ 50000 {output}"
+
+rule plot_startconfig:
+    output:
+        "../results/plot_startconfig_asymmetric/startconfig.png"
+    conda:
+        "envs/sklearn_mpl.yaml"
+    shell:
+        """
+        mkdir -p ../results/plot_startconfig_asymmetric
+        julia scripts/startconfig_planebasis.jl ../resources/parameters_D3+ ../results/plot_startconfig_asymmetric/startconfig_planebasis
+        python scripts/plot_startconfig.py ../results/plot_startconfig_asymmetric/startconfig_planebasis ../results/plot_startconfig_asymmetric/startconfig.png
+        """
+
+rule plot_samples_randomorientation:
+    input:
+        f"{clustpath}/visualization/samples_aligned_all.npy"
+    output:
+        f"{clustpath}/visualization/samples_randomorientation.png"
+    conda:
+        "envs/sklearn_mpl.yaml"
+    shell:
+        "python scripts/samples_randomorientation.py {input} {output}"

@@ -1,0 +1,4 @@
+.snakemake/
+distance_matrix.npy
+samples_aligned_all.npy
+

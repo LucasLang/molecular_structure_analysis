@@ -1,0 +1,4 @@
+# number of steps for which Monte Carlo sampling is done
+nsampling: 3000000
+# number of snapshots selected from the total sample for which k-medoids clustering is done
+nclustering: 30000
