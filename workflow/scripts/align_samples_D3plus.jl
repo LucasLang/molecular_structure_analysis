@@ -23,9 +23,9 @@ samples = [samples_all[:, (nsteps÷nselection)*i] for i in 1:nselection]
 
 # important: we assume that the coordinates of all nuclei come before the first non-nucleus!
 
-medoid_index = npzread(medoid_index_filename)[1] + 1     # We need to add one to account for counting starting at 0 in Python and at 1 in Julia!
-medoid_index = interval_clustering*medoid_index          # now we have an index with respect to the complete sample
-Rnuc_medoid = R_COMframe(samples_all[:, medoid_index], masses, N)[1:Nnuc]
+medoid_index = npzread(medoid_index_filename)[1]            # keep in mind that counting starts at 0 in Python and at 1 in Julia!
+medoid_index = interval_clustering*(medoid_index + 1)       # now we have an index with respect to the complete sample
+Rnuc_medoid = R_nucCOMframe(samples_all[:, medoid_index], masses, Nnuc)[1:Nnuc]
 B = determine_basis_inplane_3particle(Rnuc_medoid)
 Rnuc_medoid_planebasis = transform_newbasis(Rnuc_medoid, B)
 Rnuc_medoid_matrix = vecofvec_to_matrix(Rnuc_medoid_planebasis)
@@ -34,7 +34,7 @@ nxyz = 3
 nparticles = 5
 Ri_COM_matrices_rotated = Array{Float64}(undef, nselection, nxyz, nparticles)
 for i in 1:nselection
-    Ri_COM = R_COMframe(samples[i], masses, N)
+    Ri_COM = R_nucCOMframe(samples[i], masses, Nnuc)
     Ri_COM_planebasis = transform_newbasis(Ri_COM, B)
     Ri_COM_matrix = vecofvec_to_matrix(Ri_COM_planebasis)
     Uopt = optimal_rotation(Rnuc_medoid_matrix, Ri_COM_matrix[1:Nnuc, :])

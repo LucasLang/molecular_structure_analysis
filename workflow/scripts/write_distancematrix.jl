@@ -23,7 +23,7 @@ Nnuc = 3    # there are three nuclei in D3+
 RCOM_matrix = Vector{Matrix{Float64}}(undef, nclustering)
 
 for i in 1:nclustering
-    Ri_COM = R_COMframe(samples[i], param.masses, Nnuc)
+    Ri_COM = R_nucCOMframe(samples[i], param.masses, Nnuc)[1:Nnuc]
     RCOM_matrix[i] = vecofvec_to_matrix(Ri_COM)
 end
 
