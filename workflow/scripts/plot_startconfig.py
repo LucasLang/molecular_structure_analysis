@@ -21,9 +21,9 @@ plt.xlabel("x / Bohrs")
 plt.ylabel("z / Bohrs")
 plt.gca().set(adjustable='box', aspect='equal')    # this ensures that the subplots are square
 for i in range(3):    # plot deuterons
-    plt.scatter(startconfig[1,i], startconfig[0,i], s=size_deuteron, c='tab:blue')
+    plt.scatter(startconfig[0,i], startconfig[2,i], s=size_deuteron, c='tab:blue')
 for i in range(3,5):  # plot electrons
-    plt.scatter(startconfig[1,i], startconfig[0,i], s=size_electron, c='tab:red')
+    plt.scatter(startconfig[0,i], startconfig[2,i], s=size_electron, c='tab:red')
 
 plt.savefig(outfile, dpi=300)
 

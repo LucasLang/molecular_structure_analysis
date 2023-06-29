@@ -1,5 +1,6 @@
 using MolStructSampling.Analysis
 using MolStructSampling.ECWaveFunction
+using ProgressBars
 
 using DelimitedFiles
 using NPZ
@@ -29,10 +30,12 @@ end
 
 distance_matrix = Matrix{Float64}(undef, nclustering, nclustering)
 
+pbar = ProgressBar(total=nclustering*(nclustering+1)÷2)   # number of unique elements of distance matrix
 for i in 1:nclustering
     for j in 1:i
         distance_matrix[i,j] = minRMSD(RCOM_matrix[i], RCOM_matrix[j])
         distance_matrix[j,i] = distance_matrix[i,j]
+        update(pbar)
     end
 end
 

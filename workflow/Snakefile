@@ -16,7 +16,9 @@ rule all:
         f"{samplpath}/equilibration.png",
         "../results/opt_jumpinglengths",
         "../results/plot_startconfig_asymmetric/startconfig.png",
-        f"{clustpath}/visualization/samples_randomorientation.png"
+        f"{clustpath}/visualization/samples_randomorientation.png",
+        "../results/plot_startconfig_asymmetric/table_pp.tex",
+        "../results/plot_startconfig_asymmetric/table_COM.tex"
 
 rule sampling_asymstart:
     input:
@@ -233,8 +235,8 @@ rule plot_startconfig:
     shell:
         """
         mkdir -p ../results/plot_startconfig_asymmetric
-        julia scripts/startconfig_planebasis.jl ../resources/parameters_D3+ ../results/plot_startconfig_asymmetric/startconfig_planebasis
-        python scripts/plot_startconfig.py ../results/plot_startconfig_asymmetric/startconfig_planebasis ../results/plot_startconfig_asymmetric/startconfig.png
+        julia scripts/startconfig_planebasis.jl ../resources/parameters_D3+ ../results/plot_startconfig_asymmetric
+        python scripts/plot_startconfig.py ../results/plot_startconfig_asymmetric/startconfig_COM ../results/plot_startconfig_asymmetric/startconfig.png
         """
 
 rule plot_samples_randomorientation:
@@ -246,3 +248,12 @@ rule plot_samples_randomorientation:
         "envs/sklearn_mpl.yaml"
     shell:
         "python scripts/samples_randomorientation.py {input} {output}"
+
+rule write_startconfig_tables:
+    output:
+        "../results/plot_startconfig_asymmetric/table_pp.tex",
+        "../results/plot_startconfig_asymmetric/table_COM.tex"
+    shell:
+        """
+        python scripts/write_startconfig_tables.py ../results/plot_startconfig_asymmetric/
+        """
