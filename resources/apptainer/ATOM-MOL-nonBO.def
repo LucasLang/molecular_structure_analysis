@@ -1,0 +1,55 @@
+Bootstrap: docker
+From: ubuntu:focal
+
+%post
+    ######################
+    #  Intel MKL and MPI #
+    ######################
+
+    apt-get update
+    apt-get -y install wget         
+    apt-get -y install gpg          
+    apt-get -y install vim         
+    apt-get -y install git          
+    apt-get -y install gcc
+    apt-get -y install make
+    wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+    apt update
+    apt -y install intel-hpckit     
+    
+    ############################
+    #  Install ATOM-MOL-nonBO  #
+    ############################
+
+    # For some reason I do not understand, sourcing the Intel oneapi setvars.sh script does not work in this %post section
+    # Therefore, I set the environment variables necessary for compilation (mpi, mkl, compiler) manually.
+    export PATH=/opt/intel/oneapi/compiler/latest/linux/lib/oclfpga/bin:/opt/intel/oneapi/compiler/latest/linux/bin/intel64:/opt/intel/oneapi/compiler/latest/linux/bin:/opt/intel/oneapi/mkl/latest/bin/intel64:/opt/intel/oneapi/mpi/latest//libfabric/bin:/opt/intel/oneapi/mpi/latest//bin:$PATH
+    export LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/latest/linux/lib:/opt/intel/oneapi/compiler/latest/linux/lib/x64:/opt/intel/oneapi/compiler/latest/linux/lib/oclfpga/host/linux64/lib:/opt/intel/oneapi/compiler/latest/linux/compiler/lib/intel64_lin:/opt/intel/oneapi/mkl/latest/lib/intel64:/opt/intel/oneapi/mpi/latest//libfabric/lib:/opt/intel/oneapi/mpi/latest//lib/release:/opt/intel/oneapi/mpi/latest//lib:$LD_LIBRARY_PATH
+    export CPATH=/opt/intel/oneapi/compiler/latest/linux/lib/oclfpga/include:/opt/intel/oneapi/mkl/latest/include:/opt/intel/oneapi/mpi/latest//include
+    export LIBRARY_PATH=/opt/intel/oneapi/compiler/latest/linux/compiler/lib/intel64_lin:/opt/intel/oneapi/compiler/latest/linux/lib:/opt/intel/oneapi/mkl/latest/lib/intel64:/opt/intel/oneapi/mpi/latest//libfabric/lib:/opt/intel/oneapi/mpi/latest//lib/release:/opt/intel/oneapi/mpi/latest//lib
+
+    mkdir /code
+    cd /code
+    git clone https://github.com/LucasLang/ATOM-MOL-nonBO.git
+    cd ATOM-MOL-nonBO/src
+    git checkout original
+    sed -i 's/-lblas -llapack/-qmkl/g' Makefile  # Flag for Intel MKL
+    make
+    mv main main_orig
+    git checkout Makefile
+    git checkout writeparams
+    sed -i 's/-lblas -llapack/-qmkl/g' Makefile  # Flag for Intel MKL
+    rm *.o
+    make
+    mv main main_coeff
+    
+    # create run_ATOM-MOL-nonBO.sh using a here-document
+    cat > run_ATOM-MOL-nonBO.sh << end
+    #!/usr/bin/env bash
+    /code/ATOM_MOL_nonBO/src/main_\$1
+    end
+
+%runscript
+    . /opt/intel/oneapi/setvars.sh                   
+    /code/ATOM-MOL-nonBO/src/run_ATOM-MOL-nonBO.sh "$@"                

@@ -1,4 +1,5 @@
 .snakemake/
 distance_matrix.npy
 samples_aligned_all.npy
+ATOM-MOL-nonBO.sif
 
