@@ -45,10 +45,13 @@ From: ubuntu:focal
     mv main main_coeff
     
     # create run_ATOM-MOL-nonBO.sh using a here-document
+    # Important: no indentation, otherwise additional spaces show up in file and "end" is not recognized
     cat > run_ATOM-MOL-nonBO.sh << end
-    #!/usr/bin/env bash
-    /code/ATOM_MOL_nonBO/src/main_\$1
-    end
+#!/usr/bin/env bash
+/code/ATOM-MOL-nonBO/src/main_\$1
+end
+
+    chmod +x run_ATOM-MOL-nonBO.sh
 
 %runscript
     . /opt/intel/oneapi/setvars.sh                   
