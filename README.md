@@ -9,6 +9,7 @@ Once you have Julia, you can install the required packages via starting the Juli
 
 In order to install Snakemake, you can e.g. enter the following commands (requires conda, e.g. through a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://docs.anaconda.com/free/anaconda/install/) installation):
 ```bash
+conda config --set channel_priority strict
 conda create --name snakemake python=3.11
 conda activate snakemake
 conda install -c conda-forge -c bioconda snakemake
@@ -19,5 +20,5 @@ Basic settings for the sampling and analysis can be set in `config/config.yaml`.
 Usage:
 ```bash
 cd workflow
-snakemake -c1 --use-conda
+snakemake -c1 --use-conda --conda-frontend conda
 ```

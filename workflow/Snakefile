@@ -2,10 +2,7 @@ configfile: "../config/config.yaml"
 
 samplpath = f"../results/nsampling{config['nsampling']}"
 clustpath = f"../results/nsampling{config['nsampling']}/nclustering{config['nclustering']}"
-
-wfparams = ["../resources/parameters_D3+/coeffs",
-"../resources/parameters_D3+/gauss_param",
-"../resources/parameters_D3+/inout.txt"]
+inoutfile = "../resources/wavefunction/inout.txt"
 
 rule all:
     input:
@@ -20,9 +17,27 @@ rule all:
         "../results/plot_startconfig_asymmetric/table_pp.tex",
         "../results/plot_startconfig_asymmetric/table_COM.tex"
 
+rule write_params:
+    input:
+        "../resources/wavefunction/inout.txt"
+    output:
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param"
+    shell:
+        """
+        mkdir -p ../results/parameters
+        cd ../resources/wavefunction
+        apptainer run --bind $(pwd) ../apptainer/ATOM-MOL-nonBO.sif coeff
+        mv coeffs ../../results/parameters
+        mv gauss_param ../../results/parameters
+        cp inout.txt ../../results/parameters
+        """
+
 rule sampling_asymstart:
     input:
-        wfparams
+        inoutfile,
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param"
     params:
         nsampling=config["nsampling"],
         samplpath=samplpath
@@ -32,12 +47,14 @@ rule sampling_asymstart:
     shell:
         """
         mkdir -p {params.samplpath}/sampling_asymmetricstart
-        julia scripts/sample.jl ../resources/parameters_D3+ {params.nsampling} {params.samplpath}/sampling_asymmetricstart
+        julia scripts/sample.jl ../results/parameters {params.nsampling} {params.samplpath}/sampling_asymmetricstart
         """
 
 rule distance_matrix:
     input:
-        wfparams,
+        inoutfile,
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param",
         f"{samplpath}/sampling_asymmetricstart/sample"
     params:
         nclustering=config["nclustering"],
@@ -45,7 +62,7 @@ rule distance_matrix:
     output:
         f"{clustpath}/kmedoids/distance_matrix.npy"
     shell:
-        "julia scripts/write_distancematrix.jl ../resources/parameters_D3+ {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {output}"
+        "julia scripts/write_distancematrix.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {output}"
 
 rule kmedoids:
     input:
@@ -90,7 +107,9 @@ rule plot_alignedsamples_2DKDE:
 
 rule samples_planebasis:
     input:
-        wfparams, 
+        inoutfile,
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param",
         f"{samplpath}/sampling_asymmetricstart/sample",
         f"{samplpath}/sampling_asymmetricstart/rho"
     params:
@@ -102,7 +121,7 @@ rule samples_planebasis:
     shell:
         """
         mkdir -p {params.outfolder}
-        julia scripts/write_samples_planebasis.jl ../resources/parameters_D3+ {params.samplpath}/sampling_asymmetricstart 6 {params.outfolder}
+        julia scripts/write_samples_planebasis.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart 6 {params.outfolder}
         """
 
 rule plot_samples:
@@ -133,7 +152,9 @@ rule eldens_sampling:
 
 rule Etot_sampling:
     input:
-        wfparams=wfparams,
+        inoutfile,
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param",
         sample=f"{samplpath}/sampling_asymmetricstart/sample"
     output:
         f"{samplpath}/expectvalues/Etot_sampling"
@@ -142,12 +163,12 @@ rule Etot_sampling:
     shell:
         """
         mkdir -p {params.outfolder}
-        julia scripts/estimate_Etot.jl {input.sample} ../resources/parameters_D3+ {output}
+        julia scripts/estimate_Etot.jl {input.sample} ../results/parameters {output}
         """
 
 rule Etot_analytical:
     input:
-        "../resources/parameters_D3+/inout.txt"
+        inoutfile
     output:
         f"{samplpath}/expectvalues/Etot_analytical"
     params:
@@ -175,17 +196,24 @@ rule distances_sampling:
 
 rule distances_analytical:
     input:
-        "../resources/distances_analytical/expectvalues.out"
+        inoutfile
     output:
         f"{samplpath}/expectvalues/rDD_analytical",
         f"{samplpath}/expectvalues/rDe_analytical",
         f"{samplpath}/expectvalues/ree_analytical"
     params:
-        outfolder=f"{samplpath}/expectvalues"
+        outfolder=f"{samplpath}/expectvalues",
+        inoutfile=inoutfile
     shell:
         """
         mkdir -p {params.outfolder}
-        julia scripts/distances_analytical.jl {input} {params.outfolder}
+        cp {params.inoutfile} {params.outfolder}
+        OLDFOLDER=$(pwd)
+        cd {params.outfolder}
+        sed -i 's/OPT_CYCLE.*$/EXPC_VALS G    400/' inout.txt
+        apptainer run ../../../resources/apptainer/ATOM-MOL-nonBO.sif orig > expectvalues.out
+        cd $OLDFOLDER
+        julia scripts/distances_analytical.jl {params.outfolder}/expectvalues.out {params.outfolder}
         """
 
 rule write_table:
@@ -221,21 +249,24 @@ rule plot_equilibration:
 
 rule optimize_jumpinglengths:
     input:
-        wfparams
+        inoutfile,
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param"
     output:
         "../results/opt_jumpinglengths"
     shell:
-        "julia scripts/optimize_jumpinglengths.jl ../resources/parameters_D3+ 50000 {output}"
+        "julia scripts/optimize_jumpinglengths.jl ../results/parameters 50000 {output}"
 
 rule plot_startconfig:
     output:
-        "../results/plot_startconfig_asymmetric/startconfig.png"
+        "../results/plot_startconfig_asymmetric/startconfig.png",
+        "../results/plot_startconfig_asymmetric/startconfig_ppcoord"
     conda:
         "envs/sklearn_mpl.yaml"
     shell:
         """
         mkdir -p ../results/plot_startconfig_asymmetric
-        julia scripts/startconfig_planebasis.jl ../resources/parameters_D3+ ../results/plot_startconfig_asymmetric
+        julia scripts/startconfig_planebasis.jl ../results/parameters ../results/plot_startconfig_asymmetric
         python scripts/plot_startconfig.py ../results/plot_startconfig_asymmetric/startconfig_COM ../results/plot_startconfig_asymmetric/startconfig.png
         """
 
@@ -250,10 +281,12 @@ rule plot_samples_randomorientation:
         "python scripts/samples_randomorientation.py {input} {output}"
 
 rule write_startconfig_tables:
+    input:
+        "../results/plot_startconfig_asymmetric/startconfig_ppcoord"
     output:
         "../results/plot_startconfig_asymmetric/table_pp.tex",
         "../results/plot_startconfig_asymmetric/table_COM.tex"
     shell:
         """
-        python scripts/write_startconfig_tables.py ../results/plot_startconfig_asymmetric/
+        python scripts/write_startconfig_tables.py ../results/plot_startconfig_asymmetric
         """
