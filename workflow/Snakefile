@@ -17,9 +17,18 @@ rule all:
         "../results/plot_startconfig_asymmetric/table_pp.tex",
         "../results/plot_startconfig_asymmetric/table_COM.tex"
 
+rule build_ATOM_MOL_nonBO:
+    input:
+        "../resources/apptainer/ATOM-MOL-nonBO.def"
+    output:
+        "../resources/apptainer/ATOM-MOL-nonBO.sif"
+    shell:
+        "apptainer build {output} {input}"
+
 rule write_params:
     input:
-        "../resources/wavefunction/inout.txt"
+        "../resources/wavefunction/inout.txt",
+        "../resources/apptainer/ATOM-MOL-nonBO.sif"
     output:
         "../results/parameters/coeffs",
         "../results/parameters/gauss_param"
@@ -196,7 +205,8 @@ rule distances_sampling:
 
 rule distances_analytical:
     input:
-        inoutfile
+        inoutfile,
+        "../resources/apptainer/ATOM-MOL-nonBO.sif"
     output:
         f"{samplpath}/expectvalues/rDD_analytical",
         f"{samplpath}/expectvalues/rDe_analytical",
