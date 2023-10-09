@@ -39,6 +39,7 @@ rule write_params:
         apptainer run --bind $(pwd) ../apptainer/ATOM-MOL-nonBO.sif coeff
         mv coeffs ../../results/parameters
         mv gauss_param ../../results/parameters
+        cp inout.txt ../../results/parameters
         """
 
 rule sampling_asymstart:
