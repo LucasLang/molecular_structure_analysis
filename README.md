@@ -1,6 +1,6 @@
 This is the Snakemake workflow for reproducing the data analysis of [our paper on a quantum definition of molecular structure](https://doi.org/10.26434/chemrxiv-2023-mrxng).
 
-In order to execute the workflow, you need to have [Julia](https://julialang.org/) with the [MolStructSampling.jl](https://github.com/LucasLang/MolStructSampling.jl/), [NPZ.jl](https://www.juliapackages.com/p/npz), and [ProgressBars.jl](https://www.juliapackages.com/p/progressbars) packages installed and [Snakemake](https://snakemake.readthedocs.io) in your path.
+In order to execute the workflow, you need to have [Julia](https://julialang.org/) with the [MolStructSampling.jl](https://github.com/LucasLang/MolStructSampling.jl/), [NPZ.jl](https://www.juliapackages.com/p/npz), and [ProgressBars.jl](https://www.juliapackages.com/p/progressbars) packages installed and [Snakemake](https://snakemake.readthedocs.io) as well as [Apptainer](https://apptainer.org/docs/admin/main/installation.html#install-from-pre-built-packages) in your path.
 
 Once you have Julia, you can install the required packages via starting the Julia REPL by typing `julia` in a terminal, then entering Pkg mode by pressing the `]` key and entering the following commands:
 - `add https://github.com/LucasLang/MolStructSampling.jl.git`
