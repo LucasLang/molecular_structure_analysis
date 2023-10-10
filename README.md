@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8420740.svg)](https://doi.org/10.5281/zenodo.8420740)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8425665.svg)](https://doi.org/10.5281/zenodo.8425665)
 
 This is the Snakemake workflow for reproducing the data analysis of [our paper on a quantum definition of molecular structure](https://doi.org/10.26434/chemrxiv-2023-mrxng).
 
