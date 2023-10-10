@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8420740.svg)](https://doi.org/10.5281/zenodo.8420740)
+
 This is the Snakemake workflow for reproducing the data analysis of [our paper on a quantum definition of molecular structure](https://doi.org/10.26434/chemrxiv-2023-mrxng).
 
 In order to execute the workflow, you need to have [Julia](https://julialang.org/) with the [MolStructSampling.jl](https://github.com/LucasLang/MolStructSampling.jl/), [NPZ.jl](https://www.juliapackages.com/p/npz), and [ProgressBars.jl](https://www.juliapackages.com/p/progressbars) packages installed and [Snakemake](https://snakemake.readthedocs.io) as well as [Apptainer](https://apptainer.org/docs/admin/main/installation.html#install-from-pre-built-packages) in your path.
