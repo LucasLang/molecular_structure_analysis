@@ -18,6 +18,19 @@ rule all:
         "../results/plot_startconfig_asymmetric/table_pp.tex",
         "../results/plot_startconfig_asymmetric/table_COM.tex"
 
+rule test:
+    input:
+        f"{clustpath}/kmedoids/statistics/offset10/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset20/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset30/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset40/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset50/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset60/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset70/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset80/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset90/distance_matrix.npy",
+        f"{clustpath}/kmedoids/statistics/offset100/distance_matrix.npy"
+
 rule build_ATOM_MOL_nonBO:
     input:
         "../resources/apptainer/ATOM-MOL-nonBO.def"
@@ -85,9 +98,9 @@ rule distance_matrix_statistics:
         nclustering=config["nclustering"],
         samplpath=samplpath
     output:
-        f"{clustpath}/kmedoids/offset{{offset}}/distance_matrix.npy"
+        f"{clustpath}/kmedoids/statistics/offset{{offset}}/distance_matrix.npy"
     shell:
-        "julia scripts/write_distancematrix_offset.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {offset} {output}"
+        "julia scripts/write_distancematrix.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {wildcards.offset} {output}"
 
 rule kmedoids:
     input:
