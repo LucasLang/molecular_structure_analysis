@@ -3,6 +3,7 @@ configfile: "../config/config.yaml"
 samplpath = f"../results/nsampling{config['nsampling']}"
 clustpath = f"../results/nsampling{config['nsampling']}/nclustering{config['nclustering']}"
 inoutfile = "../resources/wavefunction/inout.txt"
+clusterinterval = config['nsampling']//config['nclustering']
 
 rule all:
     input:
@@ -67,11 +68,26 @@ rule distance_matrix:
         f"{samplpath}/sampling_asymmetricstart/sample"
     params:
         nclustering=config["nclustering"],
-        samplpath=samplpath
+        samplpath=samplpath,
+        offset = clusterinterval
     output:
         f"{clustpath}/kmedoids/distance_matrix.npy"
     shell:
-        "julia scripts/write_distancematrix.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {output}"
+        "julia scripts/write_distancematrix.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {params.offset} {output}"
+
+rule distance_matrix_statistics:
+    input:
+        inoutfile,
+        "../results/parameters/coeffs",
+        "../results/parameters/gauss_param",
+        f"{samplpath}/sampling_asymmetricstart/sample"
+    params:
+        nclustering=config["nclustering"],
+        samplpath=samplpath
+    output:
+        f"{clustpath}/kmedoids/offset{{offset}}/distance_matrix.npy"
+    shell:
+        "julia scripts/write_distancematrix_offset.jl ../results/parameters {params.samplpath}/sampling_asymmetricstart/sample {params.nclustering} {offset} {output}"
 
 rule kmedoids:
     input:

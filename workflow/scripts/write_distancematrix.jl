@@ -8,7 +8,8 @@ using NPZ
 paramfolder = ARGS[1]
 samplefile = ARGS[2]
 nclustering = parse(Int64, ARGS[3])
-outfile = ARGS[4]
+offset = parse(Int64, ARGS[4])
+outfile = ARGS[5]
 
 param = WaveFuncParam(paramfolder)
 
@@ -16,7 +17,7 @@ samples_all = readdlm(samplefile)
 
 nsteps = size(samples_all)[2]
 
-samples = [samples_all[:, (nsteps÷nclustering)*i] for i in 1:nclustering]
+samples = [samples_all[:, (nsteps÷nclustering)*i + offset] for i in 0:(nclustering-1)]
 
 # important: we assume that the coordinates of all nuclei come before the first non-nucleus!
 Nnuc = 3    # there are three nuclei in D3+

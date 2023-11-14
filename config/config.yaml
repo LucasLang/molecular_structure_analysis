@@ -2,3 +2,5 @@
 nsampling: 3000000
 # number of snapshots selected from the total sample for which k-medoids clustering is done
 nclustering: 30000
+# number of times the k-medoids clustering is repeated for obtaining statistics
+nstatistics: 10
