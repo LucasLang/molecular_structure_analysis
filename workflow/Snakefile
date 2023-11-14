@@ -20,16 +20,16 @@ rule all:
 
 rule test:
     input:
-        f"{clustpath}/kmedoids/statistics/offset10/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset20/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset30/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset40/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset50/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset60/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset70/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset80/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset90/distance_matrix.npy",
-        f"{clustpath}/kmedoids/statistics/offset100/distance_matrix.npy"
+        f"{clustpath}/kmedoids/statistics/offset10/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset20/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset30/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset40/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset50/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset60/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset70/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset80/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset90/nclusters1_medoid_indices.npy",
+        f"{clustpath}/kmedoids/statistics/offset100/nclusters1_medoid_indices.npy"
 
 rule build_ATOM_MOL_nonBO:
     input:
@@ -104,15 +104,13 @@ rule distance_matrix_statistics:
 
 rule kmedoids:
     input:
-        f"{clustpath}/kmedoids/distance_matrix.npy"
-    params:
-        outfolder=f"{clustpath}/kmedoids"
+        "{path}/distance_matrix.npy"
     output:
-        f"{clustpath}/kmedoids/nclusters1_medoid_indices.npy"
+        "{path}/nclusters1_medoid_indices.npy"
     conda:
         "envs/sklearnextra.yaml"
     shell:
-        "python scripts/run_kmedoids.py {input} {params.outfolder}"
+        "python scripts/run_kmedoids.py {input} {wildcards.path}"
 
 rule align_samples_all:
     input:
