@@ -20,6 +20,10 @@ rule all:
         "../results/plot_startconfig_asymmetric/table_pp.tex",
         "../results/plot_startconfig_asymmetric/table_COM.tex"
 
+rule sidelengths:
+    input:
+        [f"{clustpath}/kmedoids/statistics/offset{offset}/sidelengths" for offset in offsets_medoidstatistics]
+
 rule build_ATOM_MOL_nonBO:
     input:
         "../resources/apptainer/ATOM-MOL-nonBO.def"
@@ -103,7 +107,16 @@ rule kmedoids:
 
 rule medoid_statistics:
     input:
-        [f"{clustpath}/kmedoids/statistics/offset{offset}/nclusters1_medoid_indices.npy" for offset in offsets_medoidstatistics]
+        f"{samplpath}/sampling_asymmetricstart/sample",
+        "{path}/offset{offset}/nclusters1_medoid_indices.npy"
+    output:
+        "{path}/offset{offset}/sidelengths"
+    params:
+        nclustering=config["nclustering"],
+    shell:
+        """
+        python scripts/medoid_analysis.py {input} {params.nclustering} {wildcards.offset} {output}
+        """
 
 rule align_samples_all:
     input:
