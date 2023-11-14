@@ -4,6 +4,8 @@ samplpath = f"../results/nsampling{config['nsampling']}"
 clustpath = f"../results/nsampling{config['nsampling']}/nclustering{config['nclustering']}"
 inoutfile = "../resources/wavefunction/inout.txt"
 clusterinterval = config['nsampling']//config['nclustering']
+offsetinterval = clusterinterval//config['nstatistics']
+offsets_medoidstatistics = [(i+1)*offsetinterval for i in range(config['nstatistics'])]
 
 rule all:
     input:
@@ -17,19 +19,6 @@ rule all:
         f"{clustpath}/visualization/samples_randomorientation.png",
         "../results/plot_startconfig_asymmetric/table_pp.tex",
         "../results/plot_startconfig_asymmetric/table_COM.tex"
-
-rule test:
-    input:
-        f"{clustpath}/kmedoids/statistics/offset10/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset20/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset30/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset40/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset50/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset60/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset70/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset80/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset90/nclusters1_medoid_indices.npy",
-        f"{clustpath}/kmedoids/statistics/offset100/nclusters1_medoid_indices.npy"
 
 rule build_ATOM_MOL_nonBO:
     input:
@@ -111,6 +100,10 @@ rule kmedoids:
         "envs/sklearnextra.yaml"
     shell:
         "python scripts/run_kmedoids.py {input} {wildcards.path}"
+
+rule medoid_statistics:
+    input:
+        [f"{clustpath}/kmedoids/statistics/offset{offset}/nclusters1_medoid_indices.npy" for offset in offsets_medoidstatistics]
 
 rule align_samples_all:
     input:
