@@ -18,11 +18,20 @@ rule all:
         "../results/plot_startconfig_asymmetric/startconfig.png",
         f"{clustpath}/visualization/samples_randomorientation.png",
         "../results/plot_startconfig_asymmetric/table_pp.tex",
-        "../results/plot_startconfig_asymmetric/table_COM.tex"
+        "../results/plot_startconfig_asymmetric/table_COM.tex",
+        f"{clustpath}/kmedoids/statistics/medoid_statistics.tex"
 
-rule sidelengths:
+rule medoid_statistics_table:
     input:
         [f"{clustpath}/kmedoids/statistics/offset{offset}/sidelengths" for offset in offsets_medoidstatistics]
+    output:
+        f"{clustpath}/kmedoids/statistics/medoid_statistics.tex"
+    params:
+        offsetinterval = offsetinterval,
+        nstatistics = config['nstatistics'],
+        path = f"{clustpath}/kmedoids/statistics"
+    shell:
+        "python scripts/write_table_medoidstatistics.py {params.offsetinterval} {params.nstatistics} {params.path}"
 
 rule build_ATOM_MOL_nonBO:
     input:
